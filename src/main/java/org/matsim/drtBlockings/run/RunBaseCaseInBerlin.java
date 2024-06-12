@@ -58,6 +58,7 @@ public class RunBaseCaseInBerlin {
      *             6) path to output directory
      *             7) path to networkChangeEvents
      *             8) path to plans
+     *             9) path to drt vehicles file
      */
 
     //GENERAL INPUT
@@ -91,6 +92,7 @@ public class RunBaseCaseInBerlin {
         String outputPath;
         String networkChangeEvents;
         String inputPlans;
+        String inputVehicles;
 
 
         if(args.length > 0){
@@ -102,6 +104,8 @@ public class RunBaseCaseInBerlin {
             outputPath = args[5];
             networkChangeEvents = args[6];
             inputPlans = args[7];
+            inputVehicles = args[8];
+            System.out.println("Executing run script with the following arguments: " + args);
         } else {
             configPath = INPUT_CONFIG;
             carrierPlans = CARRIERS_PLANS_PLANNED;
@@ -111,6 +115,7 @@ public class RunBaseCaseInBerlin {
             outputPath = OUTPUT_DIR;
             networkChangeEvents = INPUT_NETWORK_CHANGE_EVENTS;
             inputPlans = INPUT_DRT_PLANS;
+            inputVehicles = INPUT_DRT_VEHICLES;
         }
 
         Config config = prepareConfig(configPath, carrierPlans, carrierVehTypes, inputNetwork, outputPath,
@@ -118,7 +123,7 @@ public class RunBaseCaseInBerlin {
 
         Scenario scenario = prepareScenario(config, performTourplanning);
 
-        Controler controler = prepareControler(scenario);
+        Controler controler = prepareControler(scenario, inputVehicles);
 
         //might need to customize this method, for now it stays as it is in PFAV
         prepareFreightOutputDataAndStats(scenario, controler.getEvents(), controler, FreightUtils.getCarriers(scenario));
@@ -181,7 +186,7 @@ public class RunBaseCaseInBerlin {
                 FreightUtils.getCarriers(scenario).getCarriers().values().forEach(carrier -> {
                     CarrierUtils.setJspritIterations(carrier, 50);
                 });
-                FreightUtils.runJsprit(scenario, freightCfg);
+                FreightUtils.runJsprit(scenario);
                 new File(config.controler().getOutputDirectory()).mkdirs();
                 new CarrierPlanXmlWriterV2(FreightUtils.getCarriers(scenario)).write(config.controler().getOutputDirectory() + "carriers_planned.xml");
             } catch (InterruptedException e) {
@@ -194,10 +199,10 @@ public class RunBaseCaseInBerlin {
         return scenario;
     }
 
-    public static Controler prepareControler(Scenario scenario) {
+    public static Controler prepareControler(Scenario scenario, String inputVehicles) {
 
         Controler controler = RunBerlinScenario.prepareControler(scenario);
-        configureDRTOnly(scenario, controler);
+        configureDRTOnly(scenario, controler, inputVehicles);
 //        CarrierVehicleTypes types = FreightUtils.getCarrierVehicleTypes(scenario);
 
         //this was copied from PFAV RunNormalFreightInBerlin class, not sure if its necessary
@@ -214,10 +219,10 @@ public class RunBaseCaseInBerlin {
         return controler;
     }
 
-    private static void configureDRTOnly(Scenario scenario, Controler controler) {
+    private static void configureDRTOnly(Scenario scenario, Controler controler, String inputVehicles) {
 
         DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(scenario.getConfig());
-        drtCfg.setVehiclesFile(INPUT_DRT_VEHICLES);
+        drtCfg.setVehiclesFile(inputVehicles);
 
         controler.addOverridingModule(new AbstractModule() {
             @Override

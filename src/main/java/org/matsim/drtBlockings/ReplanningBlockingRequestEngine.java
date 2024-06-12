@@ -82,7 +82,7 @@ class ReplanningBlockingRequestEngine implements BlockingRequestEngine, DrtBlock
         Carriers carriers = FreightUtils.getCarriers(this.scenario);
         initCarriers(carriers);
         try {
-            FreightUtils.runJsprit(scenario, ConfigUtils.addOrGetModule(scenario.getConfig(), FreightConfigGroup.class));
+            FreightUtils.runJsprit(scenario);
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

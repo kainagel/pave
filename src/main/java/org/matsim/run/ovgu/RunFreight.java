@@ -56,9 +56,9 @@ import org.matsim.examples.ExamplesUtils;
 import org.matsim.vehicles.VehicleType;
 
 import org.matsim.vehicles.VehicleUtils;
-import ovgu.pave.core.Core;
-import ovgu.pave.model.input.Input;
-import ovgu.pave.model.solution.Solution;
+//import ovgu.pave.core.Core;
+//import ovgu.pave.model.input.Input;
+//import ovgu.pave.model.solution.Solution;
 
 import java.io.IOException;
 import java.net.URL;
@@ -170,26 +170,26 @@ class RunFreight {
 		case ovgu:
 			log.info("Starting with OVGU algorithm");
 			for (Carrier carrier : carriers.getCarriers().values()) {
-				MatsimOvguFactory factory = new MatsimOvguFactory(carrier);
+//				MatsimOvguFactory factory = new MatsimOvguFactory(carrier);
 
 				log.info("convert MATSim to OVGU");
-				Input input = factory.createOVGUInput(network, config);
-
-				log.info("run algorithm");
-				// run OVGU core with default config and input data
-				Core core = new Core();
-				core.initConfig("./scenarios/ovgu/defaultConfig.xml");
-				core.initInput(input);
-				core.initNetwork();
-				core.run();
-
-				log.info("handle alg solution");
-				Solution solution = core.getSolution();
-				Collection<ScheduledTour> tours = factory.createMatsimTours(solution);
-				CarrierPlan carrierPlan = new CarrierPlan(carrier, tours);
-				carrierPlan.setScore((double) (solution.getScore() * (-1)));
-				NetworkRouter.routePlan(carrierPlan, netBasedCosts);
-				carrier.setSelectedPlan(carrierPlan);
+//				Input input = factory.createOVGUInput(network, config);
+//
+//				log.info("run algorithm");
+//				// run OVGU core with default config and input data
+//				Core core = new Core();
+//				core.initConfig("./scenarios/ovgu/defaultConfig.xml");
+//				core.initInput(input);
+//				core.initNetwork();
+//				core.run();
+//
+//				log.info("handle alg solution");
+//				Solution solution = core.getSolution();
+//				Collection<ScheduledTour> tours = factory.createMatsimTours(solution);
+//				CarrierPlan carrierPlan = new CarrierPlan(carrier, tours);
+//				carrierPlan.setScore((double) (solution.getScore() * (-1)));
+//				NetworkRouter.routePlan(carrierPlan, netBasedCosts);
+//				carrier.setSelectedPlan(carrierPlan);
 			} // carrier
 		} // ovgu
 

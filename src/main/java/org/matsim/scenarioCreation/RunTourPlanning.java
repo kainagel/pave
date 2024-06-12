@@ -65,7 +65,7 @@ class RunTourPlanning {
         carriers.getCarriers().values().forEach(carrier -> CarrierUtils.setJspritIterations(carrier, 50));
 
         try {
-            FreightUtils.runJsprit(scenario, freightConfig);
+            FreightUtils.runJsprit(scenario);
         } catch (Exception e) {
             e.printStackTrace();
         }

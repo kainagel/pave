@@ -59,7 +59,7 @@ public class FreightBlockingRequestCreatorTest {
 
         new CarrierVehicleTypeLoader(carrierContainer).loadVehicleTypes(vTypes);
 
-        FreightUtils.runJsprit(scenario, new FreightConfigGroup());
+        FreightUtils.runJsprit(scenario);
     }
 
     private void setupCarrier(Carrier carrier, VehicleType vehicleType) {

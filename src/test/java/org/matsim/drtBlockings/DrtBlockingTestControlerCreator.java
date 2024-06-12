@@ -78,7 +78,7 @@ class DrtBlockingTestControlerCreator {
 		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 
 		try {
-			FreightUtils.runJsprit(scenario, freightCfg);
+			FreightUtils.runJsprit(scenario);
 		} catch (ExecutionException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {

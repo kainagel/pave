@@ -87,7 +87,7 @@ final class PFAVScheduler {
 		updateTimeline(vehicle);
 		Task currentTask = schedule.getCurrentTask();
 
-		switch (TaxiTaskBaseType.getBaseType(currentTask)) {
+		switch (TaxiTaskBaseType.getBaseTypeOrElseThrow(currentTask)) {
 			case PICKUP:
 				if (!taxiCfg.isDestinationKnown()) {
 					appendResultingTasksAfterPickup(vehicle);
@@ -512,7 +512,7 @@ final class PFAVScheduler {
 	private final static double REMOVE_STAY_TASK = Double.NEGATIVE_INFINITY;
 
 	private double calcNewEndTime(DvrpVehicle vehicle, Task task, double newBeginTime) {
-		switch (TaxiTaskBaseType.getBaseType(task)) {
+		switch (TaxiTaskBaseType.getBaseTypeOrElseThrow(task)) {
 			case STAY: {
 				if (Schedules.getLastTask(vehicle.getSchedule()).equals(task)) {// last task
 					// even if endTime=beginTime, do not remove this task!!! A taxi schedule should end with WAIT

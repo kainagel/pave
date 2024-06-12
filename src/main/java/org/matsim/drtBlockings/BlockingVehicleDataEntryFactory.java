@@ -1,8 +1,8 @@
 package org.matsim.drtBlockings;
 
 import com.google.inject.Provider;
-import org.matsim.contrib.drt.optimizer.VehicleData;
 import org.matsim.contrib.drt.optimizer.VehicleDataEntryFactoryImpl;
+import org.matsim.contrib.drt.optimizer.VehicleEntry;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.schedule.DrtTaskType;
 import org.matsim.contrib.dvrp.fleet.DvrpVehicle;
@@ -11,7 +11,7 @@ import org.matsim.core.config.Config;
 
 import javax.inject.Inject;
 
- class BlockingVehicleDataEntryFactory implements VehicleData.EntryFactory {
+ class BlockingVehicleDataEntryFactory implements VehicleEntry.EntryFactory {
 
     private final VehicleDataEntryFactoryImpl delegate;
     DrtBlockingManager blockingManager;
@@ -22,7 +22,7 @@ import javax.inject.Inject;
     }
 
     @Override
-    public VehicleData.Entry create(DvrpVehicle vehicle, double currentTime) {
+    public VehicleEntry create(DvrpVehicle vehicle, double currentTime) {
         if(! blockingManager.isVehicleBlocked(vehicle)){
             //can not touch vehicles out of order
             if(vehicle.getSchedule().getStatus() == Schedule.ScheduleStatus.STARTED){

@@ -77,11 +77,12 @@ class AdaptiveBlockingOptimizer implements BlockingOptimizer {
 
     private PriorityQueue<DrtBlockingRequest> blockingRequests;
 
-    private double minIdleVehicleRatio;
+    private final double minIdleVehicleRatio;
     private final Config config;
 
     AdaptiveBlockingOptimizer(DefaultDrtOptimizer optimizer, Fleet fleet, DrtScheduleInquiry scheduleInquiry, DrtBlockingManager blockingManager,
-                              DrtBlockingRequestDispatcher dispatcher, TravelTime travelTime, EventsManager eventsManager, Network modalNetwork, MobsimTimer timer, Config config) {
+                              DrtBlockingRequestDispatcher dispatcher, TravelTime travelTime, EventsManager eventsManager, Network modalNetwork,
+                              MobsimTimer timer, Config config, double minIdleVehicleRatio) {
         this.optimizer = optimizer;
         this.fleet = fleet;
         this.scheduleInquiry = scheduleInquiry;
@@ -96,7 +97,7 @@ class AdaptiveBlockingOptimizer implements BlockingOptimizer {
                 travelTime);
 
         this.blockingRequests = new PriorityQueue<>(Comparator.comparing((DrtBlockingRequest::getSubmissionTime)).reversed());
-        this.minIdleVehicleRatio = 0.50;
+        this.minIdleVehicleRatio = minIdleVehicleRatio;
         this.config = config;
     }
 

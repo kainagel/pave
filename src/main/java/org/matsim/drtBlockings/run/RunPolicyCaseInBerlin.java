@@ -55,17 +55,19 @@ public class RunPolicyCaseInBerlin {
      *             6) path to output directory
      *             7) path to networkChangeEvents
      *             8) path to plans
+     *             9) path to drt vehicles file
+     *             10) wished value for minIdleVehicleRatio. Standard is 0.5
      */
 
     //General input
     //dir for 1 carrier only
 //    private static final String INPUT_DIR = "C:/Users/simon/tubCloud/Shared/MA-Meinhardt/InputDRT/Lichtenberg Nord_Carrier/";
     //dir for all Berlin carriers
-    private static final String INPUT_DIR = "C:/Users/simon/tubCloud/Shared/MA-Meinhardt/InputDRT/Berlin_Carriers/";
+    private static final String INPUT_DIR = "C:/Users/Simon/Documents/vsp-papers/Using_On-Demand-Vehicle-Fleets_for_Person_and_Freight_Transport/JTTM_re-publish/InputDRT/Berlin_Carriers/";
     private static final String INPUT_CONFIG = INPUT_DIR + "p2-23.output_config.xml";
     private static final String INPUT_NETWORK_CHANGE_EVENTS = INPUT_DIR + "p2-23.networkChangeEvents.xml.gz";
-    private static final String INPUT_DRT_PLANS = INPUT_DIR + "p2-23.output_plans_drtUsersOnly_selectedPlans_noRoutes.xml.gz";
-//    private static final String INPUT_DRT_PLANS = INPUT_DIR + "p2-23.output_plans_200Persons.xml.gz";
+//    private static final String INPUT_DRT_PLANS = INPUT_DIR + "p2-23.output_plans_drtUsersOnly_selectedPlans_noRoutes.xml.gz";
+    private static final String INPUT_DRT_PLANS = INPUT_DIR + "p2-23.output_plans_200Persons.xml.gz";
     private static final String INPUT_NETWORK = INPUT_DIR + "p2-23.output_network.xml.gz";
     private static final String INPUT_DRT_VEHICLES = INPUT_DIR + "p2-23.drt__vehicles.xml.gz";
 
@@ -77,8 +79,10 @@ public class RunPolicyCaseInBerlin {
 //    private static final String CARRIERS_PLANS_PLANNED = INPUT_DIR + "carriers_4hTimeWindows_openBerlinNet_LichtenbergNord_8-24_PLANNED_oneTour.xml";
     private static final String CARRIER_VEHICLE_TYPES = INPUT_DIR + "carrier_vehicleTypes_woTimeCost.xml";
     private static final boolean RUN_TOURPLANNING = false;
+    private static final double MIN_IDLE_VEHICLE_RATIO = 0.5;
 
-    private static final String OUTPUT_DIR = "./output/berlin-v5.5-10pct/policy_cases/" + CARRIERS_PLANS_PLANNED.replace(INPUT_DIR, "");
+    private static final String OUTPUT_DIR = "./output/berlin-v5.5-10pct/policy_cases/" + CARRIERS_PLANS_PLANNED.replace(INPUT_DIR, "")
+            + "_minIdleVehicleRatio" + MIN_IDLE_VEHICLE_RATIO;
 
     public static void main(String[] args) {
         String configPath;
@@ -89,6 +93,8 @@ public class RunPolicyCaseInBerlin {
         String outputPath;
         String networkChangeEvents;
         String inputPlans;
+        String inputVehicles;
+        double minIdleVehicleRatio;
 
 
         if(args.length > 0){
@@ -100,6 +106,9 @@ public class RunPolicyCaseInBerlin {
             outputPath = args[5];
             networkChangeEvents = args[6];
             inputPlans = args[7];
+            inputVehicles = args[8];
+            minIdleVehicleRatio = Double.parseDouble(args[9]);
+            System.out.println("Executing run script with the following arguments: " + args);
         } else {
             configPath = INPUT_CONFIG;
             carrierPlans = CARRIERS_PLANS_PLANNED;
@@ -109,6 +118,8 @@ public class RunPolicyCaseInBerlin {
             outputPath = OUTPUT_DIR;
             networkChangeEvents = INPUT_NETWORK_CHANGE_EVENTS;
             inputPlans = INPUT_DRT_PLANS;
+            inputVehicles = INPUT_DRT_VEHICLES;
+            minIdleVehicleRatio = MIN_IDLE_VEHICLE_RATIO;
         }
 
         Config config = prepareConfig(configPath, carrierPlans, carrierVehTypes, inputNetwork, outputPath,
@@ -116,7 +127,7 @@ public class RunPolicyCaseInBerlin {
 
         Scenario scenario = prepareScenario(config, performTourplanning);
 
-        Controler controler = prepareControler(scenario);
+        Controler controler = prepareControler(scenario, inputVehicles, minIdleVehicleRatio);
 
         //might need to customize this method, for now it stays as it is in PFAV
         //not sure if its needed here because we already got our carriers analyzed with the following analysis
@@ -204,7 +215,7 @@ public class RunPolicyCaseInBerlin {
                 FreightUtils.getCarriers(scenario).getCarriers().values().forEach(carrier -> {
                     CarrierUtils.setJspritIterations(carrier, 50);
                 });
-                FreightUtils.runJsprit(scenario, freightCfg);
+                FreightUtils.runJsprit(scenario);
                 new File(config.controler().getOutputDirectory()).mkdirs();
                 new CarrierPlanXmlWriterV2(FreightUtils.getCarriers(scenario)).write(config.controler().getOutputDirectory() + "carriers_planned.xml");
             } catch (InterruptedException e) {
@@ -216,10 +227,10 @@ public class RunPolicyCaseInBerlin {
         return scenario;
     }
 
-    public static Controler prepareControler(Scenario scenario) {
+    public static Controler prepareControler(Scenario scenario, String inputVehicles, double minIdleVehicleRatio) {
 
         Controler controler = RunBerlinScenario.prepareControler(scenario);
-        configureDRTIncludingDRTBlocking(scenario, controler);
+        configureDRTIncludingDRTBlocking(scenario, controler, inputVehicles, minIdleVehicleRatio);
 
         //this was copied from PFAV RunNormalFreightInBerlin class, not sure if its necessary
 //        controler.addOverridingModule(new CarrierModule());
@@ -235,11 +246,11 @@ public class RunPolicyCaseInBerlin {
         return controler;
     }
 
-    private static void configureDRTIncludingDRTBlocking(Scenario scenario, Controler controler) {
+    private static void configureDRTIncludingDRTBlocking(Scenario scenario, Controler controler, String inputVehicles, double minIdleVehicleRatio) {
 
         //this line is only needed if DrtBlocking is wished to be activated (=only in the policy cases)
         DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(scenario.getConfig());
-        drtCfg.setVehiclesFile(INPUT_DRT_VEHICLES);
+        drtCfg.setVehiclesFile(inputVehicles);
 
         //Here the main difference between base case and policy cases is set:
         //Base case does not need to add DrtBlockingModule
@@ -248,7 +259,7 @@ public class RunPolicyCaseInBerlin {
             @Override
             public void install() {
                 install(new DvrpModule());
-                install(new DrtBlockingModule(drtCfg));
+                install(new DrtBlockingModule(drtCfg, minIdleVehicleRatio));
             }
         });
         controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));

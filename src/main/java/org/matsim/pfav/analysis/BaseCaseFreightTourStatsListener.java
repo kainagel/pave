@@ -73,7 +73,7 @@ public class BaseCaseFreightTourStatsListener implements ActivityEndEventHandler
         for (Carrier c : carriers.getCarriers().values()) {
             int nextId = 0;
             for (ScheduledTour tour : c.getSelectedPlan().getScheduledTours()) {
-                Id<Person> agentID = Id.createPersonId("freight_" + c.getId() + "_veh_" + tour.getVehicle().getVehicleId() + "_" + nextId);// this assumes that CarrierAgentTracker is used and is based on CarrierAgent.createDriverId)
+                Id<Person> agentID = Id.createPersonId("freight_" + c.getId() + "_veh_" + tour.getVehicle().getId() + "_" + nextId);// this assumes that CarrierAgentTracker is used and is based on CarrierAgent.createDriverId)
                 nextId++;
                 this.driverToScheduledTour.put(agentID, tour);
             }

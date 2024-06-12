@@ -21,7 +21,10 @@
 <!--		<matsim.version>13.0-2021w03-SNAPSHOT</matsim.version>-->
 
 		<!--		2020w51 is consistent with matsim version in matsim-berlin-v5.5.2-->
-		<matsim.version>13.0-2020w51-SNAPSHOT</matsim.version>
+<!--		<matsim.version>13.0-2020w51-SNAPSHOT</matsim.version>-->
+<!--		<matsim.version>14.0-PR1512</matsim.version>-->
+		<matsim.version>13.0</matsim.version>
+		<mainClass>org.matsim.run.drtBlocking.RunDrtBlockingBerlin</mainClass>
 	</properties>
 
 	<repositories>
@@ -148,14 +151,16 @@
 		<dependency>
 			<groupId>com.github.matsim-scenarios</groupId>
 			<artifactId>matsim-berlin</artifactId>
-			<version>5.5.2</version>
+			<version>5.5.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.github.matsim-vsp</groupId>
 			<artifactId>opt-drt</artifactId>
 			<!-- e955606ea4 is consistent with version in matsim-berlin-v5.5.2-->
-			<version>e955606ea4</version>
+<!--			<version>e955606ea4</version>-->
+<!--			opt-drt verdion which is currently used by matsim berlin scenario -june22-->
+			<version>d61d2c8294</version>
 		</dependency>
 
 		<dependency>
@@ -180,11 +185,11 @@
 			<version>${matsim.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.github.ovgu-mansci</groupId>
-			<artifactId>pave</artifactId>
-			<version>-SNAPSHOT</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.github.ovgu-mansci</groupId>-->
+<!--			<artifactId>pave</artifactId>-->
+<!--			<version>-SNAPSHOT</version>-->
+<!--		</dependency>-->
 
 	</dependencies>
 
@@ -193,32 +198,23 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.10.1</version>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<release>17</release>
 					<showWarnings>false</showWarnings>
 					<showDeprecation>false</showDeprecation>
 					<encoding>UTF-8</encoding>
-					<!-- configure initial and maximal memory for compiling -->
-					<fork>true</fork>
-					<meminitial>128m</meminitial>
-					<maxmem>512m</maxmem>
-					<compilerArguments>
-						<Xmaxwarns>4000</Xmaxwarns>
-						<Xmaxerrs>100</Xmaxerrs>
-					</compilerArguments>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.10</version>
-				<configuration>
-					<downloadSources>true</downloadSources>
-					<downloadJavadocs>true</downloadJavadocs>
-				</configuration>
-			</plugin>
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-eclipse-plugin</artifactId>-->
+<!--					<version>2.10</version>-->
+<!--					<configuration>-->
+<!--						<downloadSources>true</downloadSources>-->
+<!--						<downloadJavadocs>true</downloadJavadocs>-->
+<!--					</configuration>-->
+<!--				</plugin>-->
 <!--			<plugin>-->
 <!--				<artifactId>maven-assembly-plugin</artifactId>-->
 <!--				<configuration>-->
@@ -244,6 +240,28 @@
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M5</version>
+				<configuration>
+					<forkMode>once</forkMode>
+					<!-- avoid out of memory errors: -->
+					<argLine>-Xmx9500m -Djava.awt.headless=true -Dmatsim.preferLocalDtds=true</argLine>
+					<!--necessary in tu berlin gitlab. BUT not good in other places, so solve by command line switch only where needed.  kai, nov'18-->
+					<!--<useSystemClassLoader>false</useSystemClassLoader>-->
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
+					<mainClass>${mainClass}</mainClass>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.2.2</version>
 				<executions>
@@ -254,7 +272,19 @@
 						</goals>
 						<configuration>
 							<outputFile>${project.basedir}/${project.build.finalName}.jar</outputFile>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>${mainClass}</mainClass>
+									<manifestEntries>
+										<Specification-Vendor>org.matsim</Specification-Vendor>
+										<Implementation-Vendor>org.matsim</Implementation-Vendor>
+										<Implementation-Version>${project.version}</Implementation-Version>
+									</manifestEntries>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+							</transformers>
 							<filters>
+								<!-- Avoid signature checking -->
 								<filter>
 									<artifact>*:*</artifact>
 									<excludes>
@@ -263,20 +293,45 @@
 										<exclude>META-INF/*.RSA</exclude>
 									</excludes>
 								</filter>
+								<!-- Force some inclusion because of minimizing -->
+								<filter>
+									<artifact>org.apache.logging.log4j:*</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>xerces:*</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>org.hibernate.validator:*</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>org.glassfish:*</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>com.sun.xml.bind:*</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>org.jfree:*</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
 							</filters>
-							<transformers>
-								<!-- This bit sets the main class for the executable jar as you otherwise would with the assembly plugin -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>org.matsim.run.RunBerlinCarBannedFromCityScenarioWithMobilityTypes</Main-Class>
-										<Specification-Vendor>org.matsim</Specification-Vendor>
-										<Implementation-Vendor>org.matsim</Implementation-Vendor>
-										<Implementation-Version>${project.version}</Implementation-Version>
-									</manifestEntries>
-								</transformer>
-								<!-- This bit merges the various GeoTools META-INF/services files         -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-							</transformers>
+							<minimizeJar>false</minimizeJar>
 						</configuration>
 					</execution>
 				</executions>
@@ -285,7 +340,6 @@
 			<plugin>  <!-- Create sources.jar -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -295,7 +349,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 		</plugins>
 	</build>
 </project>
